@@ -1,4 +1,4 @@
-processscheduler
+Process Scheduler
 ================
 
 Programma per risolvere problemi di scheduling dei processi.
