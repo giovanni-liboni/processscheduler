@@ -23,9 +23,9 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.PrintStream;
+
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 
 public class Finestra extends JFrame{
@@ -33,7 +33,6 @@ public class Finestra extends JFrame{
 	JFrame finestra;
 
 	Object[] fcfsArray;
-	DefaultTableModel tableModel;
 	Table table;
 	static int indexTable, maxRow=0;
 	Processi processi;
@@ -42,6 +41,9 @@ public class Finestra extends JFrame{
 	JButton setQuanto;
 
 	JPanel panelHrrn,panelSjf,panelFcfs,panelSrtf,panelRr;
+	JPanel panelLog;
+	JTextArea logArea;
+	private PrintStream standardOut;
 	
 	public Finestra(){
 		finestra = new JFrame("Sistemi Operativi Teoria");
@@ -50,6 +52,25 @@ public class Finestra extends JFrame{
 		finestra.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		finestra.setLocationRelativeTo(null);
 		finestra.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		
+		// LOG PANEL
+		panelLog = new JPanel();
+		
+		logArea = new JTextArea("Programma per verificare gli esercizi del corso di Sistemi Operativi\n",7,45);
+		logArea.setVisible(true);
+		JScrollPane scrollPane = new JScrollPane(logArea);
+		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		panelLog.add(new JScrollPane(scrollPane));
+		logArea.setEditable(false);
+        PrintStream printStream = new PrintStream(new CustomOutputStream(logArea));
+         
+        // keeps reference of standard output stream
+        standardOut = System.out;
+         
+        // re-assigns standard output stream and error output stream
+        System.setOut(printStream);
+        System.setErr(printStream);
+		
 		
 		processi = new Processi();
 		
@@ -84,9 +105,20 @@ public class Finestra extends JFrame{
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				if(!fieldQuanto.getText().isEmpty()){
-					quanto = Integer.parseInt(fieldQuanto.getText());
+					String qString = fieldQuanto.getText().replaceAll(" ", "");
+					if(isInteger(qString))
+					{
+						quanto = Integer.parseInt(qString);
+						System.out.println("Quanto impostato a : " + quanto);
+						fieldQuanto.setText("");
+					}
+					else
+					{
+						System.out.println("Immettere un numero intero");
+						fieldQuanto.setText("");
+					}
 				}
-				
+
 			}
 		});
 		
@@ -128,60 +160,47 @@ public class Finestra extends JFrame{
 						)
 		);
 		panelInput.setLayout(groupLayout);
-		
-		tableModel = new DefaultTableModel(new Object[] { "Nome Processo", "Tempo di Burst", "Tempo di arrivo" }, 0);
-		
-		tableModel.addTableModelListener(new TableModelListener() {
-			
-			@Override
-			public void tableChanged(TableModelEvent e) {
-				int column = e.getColumn();
-				int row = e.getFirstRow();
-				TableModel model = (TableModel)e.getSource();
-		        String columnName = model.getColumnName(column);
-		        Object data = model.getValueAt(row, column);
-		        
-		        if(columnName.compareTo("Nome Processo") == 0){
-		        	processi.add(new Processo((String) data,0,0));
-		        }
-		        if(columnName.compareTo("Tempo di Burst") == 0){
-		        	
-		        }
-		        if(columnName.compareTo("Tempo di arrivo") == 0){
-		        	
-		        }
-				
-			}
-		});
-		
+	
 		table = new Table();
 		
 		table.setBorder(BorderFactory
 				.createTitledBorder(BorderFactory.createEtchedBorder(), "Inserire i processi"));
 		
-		panel.add(table, BorderLayout.CENTER);
+		
 		
 		JButton add = new JButton("Aggiungi");
 		add.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				if(!fieldAdd.getText().isEmpty() && !fieldBurst.getText().isEmpty() && !fieldT.getText().isEmpty())
+				
+
+				if(!fieldAdd.getText().isEmpty() && 
+						!fieldBurst.getText().isEmpty() && 
+						!fieldT.getText().isEmpty()
+						)
 				{
-					String a = fieldAdd.getText();
-					int b = Integer.parseInt(fieldBurst.getText());
-					int c = Integer.parseInt(fieldT.getText());
-					processi.add(new Processo(a, c,b));
-					processi.ordina();
-					table.updateModel(processi.processi);
-					maxRow++;
-					fieldAdd.setText("");
-					fieldBurst.setText("");
-					fieldT.setText("");
-					indexTable=processi.processi.size()-1;
-					fieldAdd.requestFocus();
-					fieldAdd.requestFocusInWindow();
-				}				
+					String burstString = fieldBurst.getText().replaceAll(" ", "");
+					String tString = fieldT.getText().replaceAll(" ", "");
+					if(isInteger(burstString) && 
+							isInteger(tString))
+					{
+						String a = fieldAdd.getText();
+						int b = Integer.parseInt(burstString);
+						int c = Integer.parseInt(tString);
+						processi.add(new Processo(a, c,b));
+						processi.ordina();
+						table.updateModel(processi.processi);
+						maxRow++;
+						fieldAdd.setText("");
+						fieldBurst.setText("");
+						fieldT.setText("");
+						indexTable=processi.processi.size()-1;
+						fieldAdd.requestFocus();
+						fieldAdd.requestFocusInWindow();
+						System.out.println("Nuovo processo : " + a );
+					}
+				}
 			}
 		});
 		JButton remove = new JButton("Rimuovi");
@@ -238,12 +257,14 @@ public class Finestra extends JFrame{
 				panelSjf.removeAll();
 				panelSrtf.removeAll();
 				
-
-				aggiornaPanel(panelFcfs, processi.logicaFcfs());
-				aggiornaPanel(panelHrrn, processi.logicaHrrn());
-				aggiornaPanel(panelSjf, processi.logicaSjf());
-				aggiornaPanel(panelSrtf, processi.logicaSrtf());
-				aggiornaPanel(panelRr, processi.logicaRr(quanto));
+				if(!processi.processi.isEmpty())
+				{
+					aggiornaPanel(panelFcfs, processi.logicaFcfs());
+					aggiornaPanel(panelHrrn, processi.logicaHrrn());
+					aggiornaPanel(panelSjf, processi.logicaSjf());
+					aggiornaPanel(panelSrtf, processi.logicaSrtf());
+					aggiornaPanel(panelRr, processi.logicaRr(quanto));
+				}
 			}
 		});
 		JPanel right = new JPanel(new BorderLayout());
@@ -252,18 +273,19 @@ public class Finestra extends JFrame{
 		buttonPane.setLayout(new BoxLayout(buttonPane,
 				BoxLayout.LINE_AXIS));
 		buttonPane.add(add);
-		buttonPane.add(Box.createHorizontalStrut(2));
+		buttonPane.add(Box.createHorizontalStrut(1));
 		buttonPane.add(remove);
-		buttonPane.add(Box.createHorizontalStrut(2));
+		buttonPane.add(Box.createHorizontalStrut(1));
 		buttonPane.add(clean);
-		buttonPane.add(Box.createHorizontalStrut(2));
+		buttonPane.add(Box.createHorizontalStrut(1));
 		buttonPane.add(calcola);
-		buttonPane.add(Box.createHorizontalStrut(2));
-		buttonPane.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
+		buttonPane.add(Box.createHorizontalStrut(1));
 		
 		right.add(panelInput, BorderLayout.CENTER);
 		right.add(buttonPane, BorderLayout.SOUTH);
 		
+		panel.add(table, BorderLayout.WEST);
+		panel.add(panelLog, BorderLayout.CENTER);
 		panel.add(right, BorderLayout.EAST);
 		return panel;
 		
@@ -317,5 +339,14 @@ public class Finestra extends JFrame{
 		}
 		panel.validate();
 		panel.updateUI();
+	}
+	public static boolean isInteger(String s) {
+	    try { 
+	        Integer.parseInt(s); 
+	    } catch(NumberFormatException e) { 
+	        return false; 
+	    }
+	    // only got here if we didn't return false
+	    return true;
 	}
 }

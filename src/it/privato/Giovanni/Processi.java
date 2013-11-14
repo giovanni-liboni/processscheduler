@@ -44,6 +44,7 @@ public class Processi {
 
 		Collections.sort(processi, Processo.COMPARE_BY_ARRIVO);
 		int tempoTotale=0;
+		int tempoArrivoMassimo=0;
 		for (int i = 0; i < processi.size();i++)
 		{
 			Processo p = processi.get(i);
@@ -52,8 +53,10 @@ public class Processi {
 			p.justCome = false;
 			p.finish=false;
 			tempoTotale+=p.burst;
-			tempoTotale+=p.tempoArrivo;
+			if (tempoArrivoMassimo < p.tempoArrivo)
+				tempoArrivoMassimo = p.tempoArrivo;
 		}
+		tempoTotale+=tempoArrivoMassimo;
 		ArrayList<String> list = new ArrayList<String>();
 		ArrayList<Processo> coda = new ArrayList<Processo>();
 		Processo p=processi.get(0);
@@ -366,7 +369,6 @@ public class Processi {
 			{
 				// aggiorno il quanto
 				quantoRimasto=quanto;
-				System.out.println("Aggiorno il quanto");
 				
 				// copio i processi nella coda precedente
 				if(!coda.isEmpty())
@@ -386,7 +388,6 @@ public class Processi {
 				
 				if (!codaPrecedente.isEmpty())
 				{
-					System.out.println("Coda non vuota...aggiorno la coda");
 					// salvo il primo elemento ( quello appena uscito )
 					p = codaPrecedente.poll();
 					
