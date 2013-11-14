@@ -59,7 +59,7 @@ public class Finestra extends JFrame{
 		logArea = new JTextArea("Programma per verificare gli esercizi del corso di Sistemi Operativi\n",7,45);
 		logArea.setVisible(true);
 		JScrollPane scrollPane = new JScrollPane(logArea);
-		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		panelLog.add(new JScrollPane(scrollPane));
 		logArea.setEditable(false);
         PrintStream printStream = new PrintStream(new CustomOutputStream(logArea));
@@ -70,7 +70,7 @@ public class Finestra extends JFrame{
         // re-assigns standard output stream and error output stream
         System.setOut(printStream);
         System.setErr(printStream);
-		
+		System.out.println("QUANTO settato di default a : " + quanto);
 		
 		processi = new Processi();
 		
