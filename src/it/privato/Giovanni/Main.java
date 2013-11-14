@@ -7,10 +7,5 @@ public class Main {
 				new Finestra();
 			}
 		});
-		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-			public void run() {
-				System.out.println("Sto per chiudere...");
-			}
-		}, "Shutdown-thread"));
 }
 }
